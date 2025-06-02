@@ -1,0 +1,560 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AAKAR 2025 Certificate Generator</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #e91e63 0%, #ad1457 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            font-weight: 300;
+        }
+
+        .header p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+
+        .controls {
+            padding: 30px;
+            background: #f8f9fa;
+            border-bottom: 1px solid #e9ecef;
+        }
+
+        .control-group {
+            display: flex;
+            gap: 20px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            background: linear-gradient(135deg, #e91e63 0%, #ad1457 100%);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+        }
+
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .status {
+            padding: 20px 30px;
+            background: #e3f2fd;
+            border-left: 4px solid #2196f3;
+            margin: 20px 30px;
+            border-radius: 0 8px 8px 0;
+        }
+
+        .progress {
+            margin: 20px 30px;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: #e9ecef;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #e91e63 0%, #ad1457 100%);
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+
+        .progress-text {
+            margin-top: 10px;
+            text-align: center;
+            color: #666;
+            font-weight: 500;
+        }
+
+        .participants-list {
+            max-height: 400px;
+            overflow-y: auto;
+            margin: 20px 30px;
+            border: 1px solid #e9ecef;
+            border-radius: 8px;
+        }
+
+        .participant-item {
+            padding: 15px;
+            border-bottom: 1px solid #f1f3f4;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: white;
+        }
+
+        .participant-item:hover {
+            background: #f8f9fa;
+        }
+
+        .participant-info {
+            flex: 1;
+        }
+
+        .participant-id {
+            font-weight: bold;
+            color: #2c3e50;
+        }
+
+        .participant-details {
+            color: #666;
+            font-size: 0.9rem;
+            margin-top: 5px;
+        }
+
+        /* Certificate with background image */
+        .certificate {
+            width: 1200px;
+            height: 850px;
+            position: relative;
+            margin: 20px auto;
+            display: none;
+        }
+
+        .certificate-bg {
+            width: 100%;
+            height: 100%;
+            position: absolute;
+            top: 0;
+            left: 0;
+            z-index: 1;
+        }
+
+        .certificate-content {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 2;
+        }
+
+        /* Text overlay styles */
+        .name-overlay {
+            position: absolute;
+            top: 515px;
+            left: 380px;
+            font-size: 24px;
+            font-weight: bold;
+            color: #000;
+            font-family: 'Times New Roman', serif;
+        }
+
+        .college-overlay {
+            position: absolute;
+            top: 575px;
+            left: 60px;
+            font-size: 24px;
+            font-weight: bold;
+            color: #000;
+            font-family: 'Times New Roman', serif;
+        }
+
+        .event-overlay {
+            position: absolute;
+            top: 635px;
+            left: 260px;
+            font-size: 24px;
+            font-weight: bold;
+            color: #000;
+            font-family: 'Times New Roman', serif;
+        }
+
+        @media print {
+            body * {
+                visibility: hidden;
+            }
+
+            .certificate,
+            .certificate * {
+                visibility: visible;
+            }
+
+            .certificate {
+                position: absolute;
+                left: 0;
+                top: 0;
+                width: 100%;
+                height: 100%;
+                margin: 0;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>AAKAR 2025 Certificate Generator</h1>
+            <p>Generate participation certificates for AAKAR 2025 event participants</p>
+        </div>
+
+        <div class="controls">
+            <div class="control-group">
+                <button class="btn" onclick="loadParticipants()">Load Participants</button>
+                <button class="btn" onclick="generateAllCertificates()" id="generateBtn" disabled>Generate All
+                    Certificates</button>
+                <button class="btn" onclick="downloadAllCertificates()" id="downloadBtn" disabled>Download All
+                    Certificates</button>
+            </div>
+        </div>
+
+        <div class="status" id="status" style="display: none;">
+            <strong>Status:</strong> <span id="statusText">Ready</span>
+        </div>
+
+        <div class="progress" id="progress" style="display: none;">
+            <div class="progress-bar">
+                <div class="progress-fill" id="progressFill"></div>
+            </div>
+            <div class="progress-text" id="progressText">0 / 0 certificates generated</div>
+        </div>
+
+        <div class="participants-list" id="participantsList" style="display: none;">
+            <!-- Participants will be loaded here -->
+        </div>
+
+        <!-- Certificate Template with Background Image -->
+        <div class="certificate" id="certificateTemplate">
+            <img src="/certificate-template.png" class="certificate-bg" alt="Certificate Background" />
+            <div class="certificate-content">
+                <div class="name-overlay" id="certParticipantName">[Participant Name]</div>
+                <div class="college-overlay" id="certCollegeName">[College Name]</div>
+                <div class="event-overlay" id="certEventName">[Event Name]</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let participants = [];
+        let certificates = [];
+
+        const csvUrl = './index.csv';
+
+        function showStatus(message, type = 'info') {
+            const status = document.getElementById('status');
+            const statusText = document.getElementById('statusText');
+            status.style.display = 'block';
+            statusText.textContent = message;
+
+            if (type === 'error') {
+                status.style.background = '#ffebee';
+                status.style.borderColor = '#f44336';
+            } else if (type === 'success') {
+                status.style.background = '#e8f5e8';
+                status.style.borderColor = '#4caf50';
+            } else {
+                status.style.background = '#e3f2fd';
+                status.style.borderColor = '#2196f3';
+            }
+        }
+
+        function updateProgress(current, total) {
+            const progress = document.getElementById('progress');
+            const progressFill = document.getElementById('progressFill');
+            const progressText = document.getElementById('progressText');
+
+            progress.style.display = 'block';
+            const percentage = (current / total) * 100;
+            progressFill.style.width = percentage + '%';
+            progressText.textContent = `${current} / ${total} certificates generated`;
+        }
+
+        async function loadParticipants() {
+            try {
+                showStatus('Loading participants data...');
+
+                const response = await fetch(csvUrl);
+                const csvText = await response.text();
+
+                const lines = csvText.split('\n');
+                participants = [];
+
+                for (let i = 1; i < lines.length; i++) {
+                    const line = lines[i].trim();
+                    if (!line) continue;
+
+                    const columns = line.split(',').map(col => col.trim().replace(/"/g, ''));
+
+                    if (columns.length >= 4 && columns[0] && columns[1]) {
+                        const participant = {
+                            id: columns[0],
+                            name: columns[1],
+                            college: columns[2],
+                            events: columns[3]
+                        };
+
+                        // Handle multiple events separated by &
+                        if (participant.events && participant.events.includes('&')) {
+                            const eventList = participant.events.split('&').map(e => e.trim());
+
+                            eventList.forEach((event, index) => {
+                                participants.push({
+                                    ...participant,
+                                    events: event,
+                                    isLeader: index === 0,
+                                    isGroup: index > 0,
+                                    eventIndex: index
+                                });
+                            });
+                        } else {
+                            participants.push({
+                                ...participant,
+                                isLeader: true,
+                                isGroup: false,
+                                eventIndex: 0
+                            });
+                        }
+                    }
+                }
+
+                displayParticipants();
+                document.getElementById('generateBtn').disabled = false;
+                showStatus(`Loaded ${participants.length} participant entries`, 'success');
+
+            } catch (error) {
+                console.error('Error loading participants:', error);
+                showStatus('Error loading participants data', 'error');
+            }
+        }
+
+        function displayParticipants() {
+            const participantsList = document.getElementById('participantsList');
+            participantsList.style.display = 'block';
+
+            participantsList.innerHTML = participants.map(p => `
+                <div class="participant-item">
+                    <div class="participant-info">
+                        <div class="participant-id">ID: ${p.id}</div>
+                        <div class="participant-details">
+                            <strong>${p.name}</strong> - ${p.college}<br>
+                            Event: ${p.events} ${p.isLeader ? '(Leader)' : ''} ${p.isGroup ? '(Group)' : ''}
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        async function generateAllCertificates() {
+            if (participants.length === 0) {
+                showStatus('No participants loaded', 'error');
+                return;
+            }
+
+            showStatus('Generating certificates...');
+            certificates = [];
+
+            // Preload the certificate background image
+            const bgImage = new Image();
+            bgImage.src = '/certificate-template.png';
+
+            bgImage.onload = async () => {
+                for (let i = 0; i < participants.length; i++) {
+                    const participant = participants[i];
+                    updateProgress(i + 1, participants.length);
+
+                    const certificateData = await generateCertificate(participant, bgImage);
+                    certificates.push(certificateData);
+
+                    await new Promise(resolve => setTimeout(resolve, 100));
+                }
+
+                document.getElementById('downloadBtn').disabled = false;
+                showStatus(`Generated ${certificates.length} certificates successfully!`, 'success');
+            };
+
+            bgImage.onerror = () => {
+                showStatus('Error loading certificate template image', 'error');
+            };
+        }
+
+        async function generateCertificate(participant, bgImage) {
+            return new Promise((resolve) => {
+                // Update certificate template with participant data
+                document.getElementById('certParticipantName').textContent = participant.name;
+                document.getElementById('certCollegeName').textContent = participant.college;
+                document.getElementById('certEventName').textContent = participant.events;
+
+                // Show certificate for rendering
+                const certificate = document.getElementById('certificateTemplate');
+                certificate.style.display = 'block';
+
+                // Use html2canvas to convert to image
+                setTimeout(() => {
+                    html2canvas(certificate, {
+                        width: 1200,
+                        height: 850,
+                        scale: 2,
+                        useCORS: true,
+                        allowTaint: true
+                    }).then(canvas => {
+                        const imageData = canvas.toDataURL('image/png');
+
+                        // Hide certificate
+                        certificate.style.display = 'none';
+
+                        // Create filename based on ID and event type
+                        let filename = `certificate_${participant.id}`;
+                        if (participant.isGroup) {
+                            filename += `_group_${participant.eventIndex}`;
+                        } else if (participant.eventIndex > 0) {
+                            filename += `_event_${participant.eventIndex}`;
+                        }
+                        filename += '.png';
+
+                        resolve({
+                            participant: participant,
+                            imageData: imageData,
+                            filename: filename
+                        });
+                    }).catch(error => {
+                        console.error('Error generating certificate:', error);
+                        certificate.style.display = 'none';
+                        resolve(null);
+                    });
+                }, 300);
+            });
+        }
+
+        function downloadAllCertificates() {
+            if (certificates.length === 0) {
+                showStatus('No certificates to download', 'error');
+                return;
+            }
+
+            showStatus('Downloading certificates...');
+
+            certificates.forEach((cert, index) => {
+                if (cert && cert.imageData) {
+                    setTimeout(() => {
+                        const link = document.createElement('a');
+                        link.download = cert.filename;
+                        link.href = cert.imageData;
+                        document.body.appendChild(link);
+                        link.click();
+                        document.body.removeChild(link);
+                    }, index * 500);
+                }
+            });
+
+            showStatus(`Downloading ${certificates.length} certificates...`, 'success');
+        }
+
+        // Alternative approach using Canvas API directly
+        function generateCertificateWithCanvas(participant) {
+            return new Promise((resolve) => {
+                const canvas = document.createElement('canvas');
+                canvas.width = 1200;
+                canvas.height = 850;
+                const ctx = canvas.getContext('2d');
+
+                const img = new Image();
+                img.crossOrigin = "anonymous";
+                img.src = '/certificate-template.png';
+
+                img.onload = () => {
+                    // Draw background image
+                    ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+
+                    // Set text styles
+                    ctx.font = 'bold 24px "Times New Roman"';
+                    ctx.fillStyle = '#000000';
+
+                    // Draw participant name
+                    ctx.fillText(participant.name, 380, 515);
+
+                    // Draw college name
+                    ctx.fillText(participant.college, 60, 575);
+
+                    // Draw event name
+                    ctx.fillText(participant.events, 260, 635);
+
+                    // Convert to image data
+                    const imageData = canvas.toDataURL('image/png');
+
+                    // Create filename
+                    let filename = `certificate_${participant.id}`;
+                    if (participant.isGroup) {
+                        filename += `_group_${participant.eventIndex}`;
+                    } else if (participant.eventIndex > 0) {
+                        filename += `_event_${participant.eventIndex}`;
+                    }
+                    filename += '.png';
+
+                    resolve({
+                        participant: participant,
+                        imageData: imageData,
+                        filename: filename
+                    });
+                };
+
+                img.onerror = () => {
+                    console.error('Error loading certificate template image');
+                    resolve(null);
+                };
+            });
+        }
+
+        // Load html2canvas library
+        const script = document.createElement('script');
+        script.src = 'https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js';
+        script.onload = () => {
+            console.log('html2canvas loaded successfully');
+        };
+        document.head.appendChild(script);
+    </script>
+</body>
+
+</html>

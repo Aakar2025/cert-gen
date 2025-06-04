@@ -279,38 +279,12 @@
         </div>
     </div>
 
-    <!-- Add JSZip library -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
-
     <script>
         let participants = [];
         let certificates = [];
 
         // Fixed CSV data from index.csv
-        const csvData = `ID,Name,College,Events,
-            28, Radhesh Ratnakar Pai, Yenepoya School Of Engineering & Technology, "Debug To Live (Debugging), The Developer's Dilemma (Web Dev)",
-                104, Mohammed Shahad, Yenepoya School Of Engineering & Technology, Squid Game,
-                    105, shaikh mohammed danish, Yenepoya School Of Engineering & Technology, Squid Game,
-                        347, Meer Mohammed Saif, Yenepoya School Of Engineering & Technology, Valo Squad(Valorant),
-                            467, radhesh, Yenepoya School Of Engineering & Technology, Code Without Sight(Blind Coding),
-                                468, Rida Fathima, Yenepoya School Of Engineering & Technology, Pattern Of Destiny(Rangoli),
-                                    28 - Jan, Aromal Biju, Yenepoya School Of Engineering & Technology, "Debug To Live (Debugging), The Developer's Dilemma (Web Dev)",
-                                        28 - 0, Rinu Manoj, Yenepoya School Of Engineering & Technology, "Debug To Live (Debugging), The Developer's Dilemma (Web Dev)",
-                                            347 - 0, Mohammed nashwan, Yenepoya School Of Engineering & Technology, Valo Squad(Valorant),
-                                                347 - 1, Ks Muhammad Abdullah, Yenepoya School Of Engineering & Technology, Valo Squad(Valorant),
-                                                    347 - 2, Firaz Muhammed, Yenepoya School Of Engineering & Technology, Valo Squad(Valorant),
-                                                        347 - 3, Ashmith sudheer, Yenepoya School Of Engineering & Technology, Valo Squad(Valorant),
-                                                            468 - 0, Harshitha, Yenepoya School Of Engineering & Technology, Pattern Of Destiny(Rangoli),
-                                                                468 - 1, Vijayalaxmi S B, Yenepoya School Of Engineering & Technology, Pattern Of Destiny(Rangoli),
-                                                                    440, swasthik, "Yenepoya Institute of Technology (YIT), Moodbidri", Mecha Kickoff(Robo Soccer),
-                                                                        441, ADITHYA, "Yenepoya Institute of Technology (YIT), Moodbidri", Mecha Kickoff(Robo Soccer),
-                                                                            501, swasthik, "Yenepoya Institute of Technology (YIT), Moodbidri", Push Or Perish(Robo Sumo),
-                                                                                440 - 0, akshay, "Yenepoya Institute of Technology (YIT), Moodbidri", Mecha Kickoff(Robo Soccer),
-                                                                                    440 - 1, sushanth, "Yenepoya Institute of Technology (YIT), Moodbidri", Mecha Kickoff(Robo Soccer),
-                                                                                        501 - 0, akshay, "Yenepoya Institute of Technology (YIT), Moodbidri", Push Or Perish(Robo Sumo),
-                                                                                            501 - 1, jayesh, "Yenepoya Institute of Technology (YIT), Moodbidri", Push Or Perish(Robo Sumo),
-                                                                                                349, Adnan, Yenepoya Institute of arts science commerce and management, Rush Hour(BGMI),
-                                                                                                    351, Abhishek Rajeev, Yenepoya Institute of arts science commerce and management, Rush Hour(BGMI), `; //ID,Name,College,Events
+        const csvData = './index.csv'; //ID,Name,College,Events
 
 
         function showStatus(message, type = 'info') {
@@ -389,22 +363,9 @@
                 const rawParticipants = parseCSV(csvData);
                 participants = [];
 
-                // Extract base team ID from participant ID
-                function getTeamId(participantId) {
-                    // If ID contains hyphen, extract the part before it
-                    if (participantId.includes('-')) {
-                        return participantId.split('-')[0];
-                    }
-                    // Otherwise, use the full ID
-                    return participantId;
-                }
-
                 rawParticipants.forEach(participant => {
                     // Clean the events string
                     let eventsString = participant.events.replace(/"/g, '').trim();
-
-                    // Extract base team ID
-                    const baseTeamId = getTeamId(participant.id);
 
                     // Handle multiple events separated by commas
                     if (eventsString.includes(',')) {
@@ -419,8 +380,7 @@
                                 isLeader: index === 0,
                                 isGroup: index > 0,
                                 eventIndex: index,
-                                filename: `${participant.id}_${event.replace(/[^a-zA-Z0-9]/g, '_')}.png`,
-                                teamId: baseTeamId // Use base team ID for grouping
+                                filename: `${participant.id}_${index === 0 ? 'leader' : 'group'}.png`
                             });
                         });
                     } else {
@@ -433,8 +393,7 @@
                             isLeader: true,
                             isGroup: false,
                             eventIndex: 0,
-                            filename: `${participant.id}_${eventsString.replace(/[^a-zA-Z0-9]/g, '_')}.png`,
-                            teamId: baseTeamId // Use base team ID for grouping
+                            filename: `${participant.id}_solo.png`
                         });
                     }
                 });
@@ -550,8 +509,7 @@
                             resolve({
                                 participant: participant,
                                 imageData: imageData,
-                                filename: participant.filename,
-                                teamId: participant.teamId
+                                filename: participant.filename
                             });
                         }).catch(error => {
                             console.error('Error generating certificate:', error);
@@ -637,69 +595,33 @@
                 resolve({
                     participant: participant,
                     imageData: imageData,
-                    filename: participant.filename,
-                    teamId: participant.teamId
+                    filename: participant.filename
                 });
             });
         }
 
-        async function downloadAllCertificates() {
+        function downloadAllCertificates() {
             if (certificates.length === 0) {
                 showStatus('No certificates to download', 'error');
                 return;
             }
 
-            showStatus('Creating certificate zip files...');
+            showStatus('Downloading certificates...');
 
-            // Group certificates by teamId
-            const teamCertificates = {};
-
-            certificates.forEach(cert => {
-                if (!teamCertificates[cert.teamId]) {
-                    teamCertificates[cert.teamId] = [];
+            certificates.forEach((cert, index) => {
+                if (cert && cert.imageData) {
+                    setTimeout(() => {
+                        const link = document.createElement('a');
+                        link.download = cert.filename;
+                        link.href = cert.imageData;
+                        document.body.appendChild(link);
+                        link.click();
+                        document.body.removeChild(link);
+                    }, index * 500);
                 }
-                teamCertificates[cert.teamId].push(cert);
             });
 
-            // Create a zip file for each team
-            const teamIds = Object.keys(teamCertificates);
-
-            for (let i = 0; i < teamIds.length; i++) {
-                const teamId = teamIds[i];
-                const teamCerts = teamCertificates[teamId];
-
-                // Get team leader or first participant for zip file name
-                const leader = teamCerts.find(c => c.participant.isLeader) || teamCerts[0];
-                const zipFilename = `Team_${teamId}_certificates.zip`;
-
-                updateProgress(i + 1, teamIds.length);
-
-                // Create a new JSZip instance
-                const zip = new JSZip();
-
-                // Add all team certificates to the zip
-                teamCerts.forEach(cert => {
-                    // Convert base64 data URL to blob
-                    const imageData = cert.imageData.split(',')[1];
-                    zip.file(cert.filename, imageData, { base64: true });
-                });
-
-                // Generate the zip file
-                const zipBlob = await zip.generateAsync({ type: 'blob' });
-
-                // Create download link
-                const link = document.createElement('a');
-                link.href = URL.createObjectURL(zipBlob);
-                link.download = zipFilename;
-                document.body.appendChild(link);
-                link.click();
-                document.body.removeChild(link);
-
-                // Small delay between downloads
-                await new Promise(resolve => setTimeout(resolve, 500));
-            }
-
-            showStatus(`Downloaded ${teamIds.length} certificate zip files successfully!`, 'success');
+            showStatus(`Downloading ${certificates.length} certificates...`, 'success');
         }
 
         // Load html2canvas library
